@@ -3,12 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <title>Creative Coding Agent</title>
+
+  <!-- CodeMirror 5 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+
   <style>
+    :root {
+      --bg: #0d0d0d;
+      --bg-deep: #080808;
+      --bg-input: #111;
+      --bg-elevated: #1a1a1a;
+      --border: #222;
+      --border-soft: #1a1a1a;
+      --border-input: #2a2a2a;
+      --text: #e0e0e0;
+      --text-dim: #555;
+      --text-muted: #444;
+      --text-sub: #666;
+      --text-secondary: #ccc;
+      --text-hover: #aaa;
+      --accent: #e0e0e0;
+      --accent-text: #0d0d0d;
+      --disabled: #333;
+      --disabled-text: #555;
+    }
+
+    :root.light {
+      --bg: #f5f5f5;
+      --bg-deep: #ebebeb;
+      --bg-input: #ffffff;
+      --bg-elevated: #eeeeee;
+      --border: #d5d5d5;
+      --border-soft: #e0e0e0;
+      --border-input: #cccccc;
+      --text: #1a1a1a;
+      --text-dim: #888;
+      --text-muted: #999;
+      --text-sub: #777;
+      --text-secondary: #444;
+      --text-hover: #333;
+      --accent: #1a1a1a;
+      --accent-text: #f5f5f5;
+      --disabled: #d0d0d0;
+      --disabled-text: #aaa;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0 }
 
     body {
-      background: #0d0d0d;
-      color: #e0e0e0;
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Courier New', monospace;
       height: 100vh;
       display: flex;
@@ -17,13 +64,37 @@
 
     header {
       padding: 16px 24px;
-      border-bottom: 1px solid #222;
+      border-bottom: 1px solid var(--border);
       font-size: 13px;
-      color: #555;
+      color: var(--text-dim);
       letter-spacing: 0.1em;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
-    header span { color: #e0e0e0 }
+    header span { color: var(--text) }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .theme-toggle {
+      background: none;
+      border: 1px solid var(--border-input);
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      padding: 3px 8px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .theme-toggle:hover { border-color: var(--text-dim); color: var(--text) }
 
     .workspace {
       display: flex;
@@ -35,27 +106,27 @@
       width: 380px;
       display: flex;
       flex-direction: column;
-      border-right: 1px solid #222;
+      border-right: 1px solid var(--border);
     }
 
     .prompt-area {
       padding: 20px;
-      border-bottom: 1px solid #222;
+      border-bottom: 1px solid var(--border);
     }
 
     .prompt-area label {
       display: block;
       font-size: 11px;
-      color: #555;
+      color: var(--text-dim);
       letter-spacing: 0.1em;
       margin-bottom: 8px;
     }
 
     textarea {
       width: 100%;
-      background: #111;
-      color: #e0e0e0;
-      border: 1px solid #2a2a2a;
+      background: var(--bg-input);
+      color: var(--text);
+      border: 1px solid var(--border-input);
       border-radius: 4px;
       padding: 12px;
       font-family: inherit;
@@ -65,7 +136,7 @@
       outline: none;
     }
 
-    textarea:focus { border-color: #444 }
+    textarea:focus { border-color: var(--text-hover) }
 
     .mode-selector {
       display: flex;
@@ -79,45 +150,44 @@
       padding: 6px 4px;
       font-size: 10px;
       letter-spacing: 0.08em;
-      background: #1a1a1a;
-      color: #555;
-      border: 1px solid #2a2a2a;
+      background: var(--bg-elevated);
+      color: var(--text-dim);
+      border: 1px solid var(--border-input);
     }
 
     .mode-btn.active {
-      background: #e0e0e0;
-      color: #0d0d0d;
-      border-color: #e0e0e0;
+      background: var(--accent);
+      color: var(--accent-text);
+      border-color: var(--accent);
     }
 
-    .mode-btn:hover:not(.active) { background: #222; color: #aaa }
+    .mode-btn:hover:not(.active) { background: var(--border); color: var(--text-hover) }
 
     #prompt { height: 100px }
-    #code { flex: 1; border: none; border-radius: 0; font-size: 12px; padding: 16px }
 
     button {
       margin: 12px 20px 0;
       padding: 10px;
-      background: #e0e0e0;
-      color: #0d0d0d;
+      background: var(--accent);
+      color: var(--accent-text);
       border: none;
       border-radius: 4px;
       font-family: inherit;
       font-size: 12px;
       letter-spacing: 0.05em;
       cursor: pointer;
-      transition: background 0.15s;
+      transition: opacity 0.15s;
     }
 
-    button:hover { background: #fff }
-    button:disabled { background: #333; color: #555; cursor: not-allowed }
+    button:hover { opacity: 0.85 }
+    button:disabled { background: var(--disabled); color: var(--disabled-text); cursor: not-allowed; opacity: 1 }
 
     .code-area {
       flex: 1;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      border-top: 1px solid #222;
+      border-top: 1px solid var(--border);
     }
 
     .code-header {
@@ -125,10 +195,11 @@
       align-items: center;
       justify-content: space-between;
       padding: 8px 20px;
-      border-bottom: 1px solid #222;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
 
-    .code-header span { font-size: 11px; color: #555; letter-spacing: 0.1em }
+    .code-header span { font-size: 11px; color: var(--text-dim); letter-spacing: 0.1em }
 
     #run-btn {
       margin: 0;
@@ -136,25 +207,50 @@
       font-size: 11px;
     }
 
+    /* CodeMirror 填满 code-area */
+    .CodeMirror {
+      flex: 1;
+      height: 100%;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      border: none;
+    }
+
+    /* 亮色主题下 CM 背景与页面一致 */
+    :root.light .CodeMirror {
+      background: var(--bg-input);
+      color: var(--text);
+    }
+
+    :root.light .CodeMirror-gutters {
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--border-input);
+    }
+
+    :root.light .CodeMirror-linenumber {
+      color: var(--text-muted);
+    }
+
     .right {
       flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #080808;
+      background: var(--bg-deep);
     }
 
     iframe {
       width: 600px;
       height: 600px;
-      border: 1px solid #1a1a1a;
-      background: #000;
+      border: 1px solid var(--border-soft);
+      background: var(--bg);
     }
 
     .status {
       padding: 6px 20px;
       font-size: 11px;
-      color: #555;
+      color: var(--text-dim);
       min-height: 28px;
     }
 
@@ -162,29 +258,29 @@
       margin: 0 20px 12px;
       padding: 6px;
       background: none;
-      border: 1px dashed #2a2a2a;
-      color: #444;
+      border: 1px dashed var(--border-input);
+      color: var(--text-muted);
       font-size: 10px;
       letter-spacing: 0.1em;
       cursor: pointer;
       width: calc(100% - 40px);
     }
 
-    .collect-toggle:hover { border-color: #555; color: #888 }
+    .collect-toggle:hover { border-color: var(--text-dim); color: var(--text-sub) }
 
     .collect-panel {
       display: none;
       padding: 0 20px 16px;
-      border-top: 1px solid #1a1a1a;
+      border-top: 1px solid var(--border-soft);
     }
 
     .collect-panel.open { display: block }
 
     .collect-panel input {
       width: 100%;
-      background: #111;
-      color: #e0e0e0;
-      border: 1px solid #2a2a2a;
+      background: var(--bg-input);
+      color: var(--text);
+      border: 1px solid var(--border-input);
       border-radius: 4px;
       padding: 8px 12px;
       font-family: inherit;
@@ -207,7 +303,10 @@
 <body>
   <header>
     <div><span>creative coding agent</span> — v0.1 · <span id="current-mode">builder</span> mode</div>
-    <a href="/gallery.html" style="color:#555;text-decoration:none;font-size:11px;letter-spacing:0.1em">GALLERY →</a>
+    <div class="header-right">
+      <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">LIGHT</button>
+      <a href="/gallery.html" style="color:var(--text-dim);text-decoration:none;font-size:11px;letter-spacing:0.1em">GALLERY →</a>
+    </div>
   </header>
 
   <div class="workspace">
@@ -241,6 +340,24 @@
   </div>
 
   <script>
+    // ── Theme ──────────────────────────────────────────────
+    const isDark = () => document.documentElement.classList.contains('light') === false
+
+    function applyTheme(light) {
+      document.documentElement.classList.toggle('light', light)
+      document.getElementById('theme-btn').textContent = light ? 'DARK' : 'LIGHT'
+      if (editor) {
+        editor.setOption('theme', light ? 'default' : 'monokai')
+      }
+    }
+
+    function toggleTheme() {
+      const nowLight = !document.documentElement.classList.contains('light')
+      localStorage.setItem('theme', nowLight ? 'light' : 'dark')
+      applyTheme(nowLight)
+    }
+
+    // ── Mode ───────────────────────────────────────────────
     let currentMode = 'builder'
 
     function setMode(mode) {
@@ -256,6 +373,7 @@
       document.getElementById('prompt').placeholder = placeholders[mode]
     }
 
+    // ── Generate ───────────────────────────────────────────
     async function generate() {
       const description = document.getElementById('prompt').value.trim()
       if (!description) return
@@ -274,7 +392,7 @@
         const data = await res.json()
         if (data.error) throw new Error(data.error)
 
-        document.getElementById('code').value = data.code
+        editor.setValue(data.code)
         const isCode = currentMode === 'builder'
         status.textContent = isCode ? 'done — click RUN to preview' : `${data.mode} responded`
         if (isCode) run()
@@ -285,8 +403,9 @@
       }
     }
 
+    // ── Run ────────────────────────────────────────────────
     function run() {
-      const code = document.getElementById('code').value
+      const code = editor.getValue()
       const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -300,6 +419,20 @@
       const blob = new Blob([html], { type: 'text/html' })
       document.getElementById('preview').src = URL.createObjectURL(blob)
     }
+
+    // ── Init ───────────────────────────────────────────────
+    const savedTheme = localStorage.getItem('theme')
+    const startLight = savedTheme === 'light'
+
+    const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+      mode: 'javascript',
+      theme: startLight ? 'default' : 'monokai',
+      lineNumbers: true,
+      tabSize: 2,
+      indentWithTabs: false,
+    })
+
+    applyTheme(startLight)
 
     // cmd+enter / ctrl+enter to generate
     document.getElementById('prompt').addEventListener('keydown', e => {

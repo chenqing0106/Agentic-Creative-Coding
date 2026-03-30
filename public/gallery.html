@@ -3,12 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <title>Sketch Gallery</title>
+
+  <!-- CodeMirror 5 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+
   <style>
+    :root {
+      --bg: #0d0d0d;
+      --bg-deep: #080808;
+      --bg-input: #111;
+      --bg-elevated: #1a1a1a;
+      --border: #222;
+      --border-soft: #1a1a1a;
+      --border-input: #2a2a2a;
+      --text: #e0e0e0;
+      --text-dim: #555;
+      --text-muted: #444;
+      --text-sub: #666;
+      --text-secondary: #ccc;
+      --text-hover: #aaa;
+      --accent: #e0e0e0;
+      --accent-text: #0d0d0d;
+      --disabled: #333;
+      --disabled-text: #555;
+    }
+
+    :root.light {
+      --bg: #f5f5f5;
+      --bg-deep: #ebebeb;
+      --bg-input: #ffffff;
+      --bg-elevated: #eeeeee;
+      --border: #d5d5d5;
+      --border-soft: #e0e0e0;
+      --border-input: #cccccc;
+      --text: #1a1a1a;
+      --text-dim: #888;
+      --text-muted: #999;
+      --text-sub: #777;
+      --text-secondary: #444;
+      --text-hover: #333;
+      --accent: #1a1a1a;
+      --accent-text: #f5f5f5;
+      --disabled: #d0d0d0;
+      --disabled-text: #aaa;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0 }
 
     body {
-      background: #0d0d0d;
-      color: #e0e0e0;
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Courier New', monospace;
       height: 100vh;
       display: flex;
@@ -17,9 +64,9 @@
 
     header {
       padding: 16px 24px;
-      border-bottom: 1px solid #222;
+      border-bottom: 1px solid var(--border);
       font-size: 13px;
-      color: #555;
+      color: var(--text-dim);
       letter-spacing: 0.1em;
       display: flex;
       align-items: center;
@@ -27,9 +74,31 @@
       flex-shrink: 0;
     }
 
-    header span { color: #e0e0e0 }
-    header a { color: #555; text-decoration: none; font-size: 11px }
-    header a:hover { color: #e0e0e0 }
+    header span { color: var(--text) }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    header a { color: var(--text-dim); text-decoration: none; font-size: 11px }
+    header a:hover { color: var(--text) }
+
+    .theme-toggle {
+      background: none;
+      border: 1px solid var(--border-input);
+      color: var(--text-dim);
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      padding: 3px 8px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .theme-toggle:hover { border-color: var(--text-dim); color: var(--text) }
 
     .workspace {
       display: flex;
@@ -40,7 +109,7 @@
     /* ── Left panel ── */
     .left {
       width: 280px;
-      border-right: 1px solid #222;
+      border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
@@ -54,22 +123,22 @@
     .section-header {
       padding: 10px 16px 6px;
       font-size: 10px;
-      color: #444;
+      color: var(--text-muted);
       letter-spacing: 0.12em;
-      border-bottom: 1px solid #1a1a1a;
+      border-bottom: 1px solid var(--border-soft);
       display: flex;
       align-items: center;
       justify-content: space-between;
       position: sticky;
       top: 0;
-      background: #0d0d0d;
+      background: var(--bg);
       z-index: 1;
     }
 
     .add-btn {
       background: none;
       border: none;
-      color: #444;
+      color: var(--text-muted);
       font-family: inherit;
       font-size: 16px;
       cursor: pointer;
@@ -77,20 +146,20 @@
       line-height: 1;
     }
 
-    .add-btn:hover { color: #e0e0e0 }
+    .add-btn:hover { color: var(--text) }
 
     .sketch-item {
       padding: 10px 16px;
-      border-bottom: 1px solid #151515;
+      border-bottom: 1px solid var(--bg-elevated);
       cursor: pointer;
       transition: background 0.1s;
     }
 
-    .sketch-item:hover { background: #141414 }
-    .sketch-item.active { background: #1a1a1a; border-left: 2px solid #e0e0e0 }
+    .sketch-item:hover { background: var(--bg-elevated) }
+    .sketch-item.active { background: var(--bg-elevated); border-left: 2px solid var(--text) }
 
-    .sketch-name { font-size: 12px; color: #ccc; margin-bottom: 3px }
-    .sketch-mood { font-size: 10px; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+    .sketch-name { font-size: 12px; color: var(--text-secondary); margin-bottom: 3px }
+    .sketch-mood { font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
 
     .sketch-item { position: relative }
     .delete-btn {
@@ -101,7 +170,7 @@
       transform: translateY(-50%);
       background: none;
       border: none;
-      color: #555;
+      color: var(--text-dim);
       font-size: 14px;
       cursor: pointer;
       padding: 2px 4px;
@@ -113,25 +182,25 @@
     .empty-group {
       padding: 12px 16px;
       font-size: 11px;
-      color: #333;
+      color: var(--border-input);
       font-style: italic;
     }
 
     /* ── Add form ── */
     .add-form {
       display: none;
-      border-top: 1px solid #222;
+      border-top: 1px solid var(--border);
       padding: 12px 16px;
       flex-direction: column;
       gap: 8px;
-      background: #0d0d0d;
+      background: var(--bg);
     }
 
     .add-form.open { display: flex }
 
     .add-form-title {
       font-size: 10px;
-      color: #555;
+      color: var(--text-dim);
       letter-spacing: 0.1em;
       display: flex;
       justify-content: space-between;
@@ -141,19 +210,21 @@
     .add-form-title button {
       background: none;
       border: none;
-      color: #444;
+      color: var(--text-muted);
       font-family: inherit;
       font-size: 12px;
       cursor: pointer;
+      margin: 0;
+      padding: 0;
     }
 
-    .add-form-title button:hover { color: #e0e0e0 }
+    .add-form-title button:hover { color: var(--text) }
 
     .add-form input, .add-form textarea {
       width: 100%;
-      background: #111;
-      color: #e0e0e0;
-      border: 1px solid #2a2a2a;
+      background: var(--bg-input);
+      color: var(--text);
+      border: 1px solid var(--border-input);
       border-radius: 3px;
       padding: 7px 10px;
       font-family: inherit;
@@ -162,7 +233,7 @@
     }
 
     .add-form textarea { height: 100px; resize: none; line-height: 1.4 }
-    .add-form input:focus, .add-form textarea:focus { border-color: #444 }
+    .add-form input:focus, .add-form textarea:focus { border-color: var(--text-hover) }
 
     .source-toggle {
       display: flex;
@@ -172,34 +243,36 @@
     .src-btn {
       flex: 1;
       padding: 5px;
-      background: #1a1a1a;
-      color: #555;
-      border: 1px solid #2a2a2a;
+      background: var(--bg-elevated);
+      color: var(--text-dim);
+      border: 1px solid var(--border-input);
       border-radius: 3px;
       font-family: inherit;
       font-size: 10px;
       letter-spacing: 0.08em;
       cursor: pointer;
+      margin: 0;
     }
 
-    .src-btn.active { background: #e0e0e0; color: #0d0d0d; border-color: #e0e0e0 }
+    .src-btn.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent) }
 
     .save-btn {
       padding: 7px;
-      background: #e0e0e0;
-      color: #0d0d0d;
+      background: var(--accent);
+      color: var(--accent-text);
       border: none;
       border-radius: 3px;
       font-family: inherit;
       font-size: 11px;
       letter-spacing: 0.05em;
       cursor: pointer;
+      margin: 0;
     }
 
-    .save-btn:hover { background: #fff }
-    .save-btn:disabled { background: #333; color: #555; cursor: not-allowed }
+    .save-btn:hover { opacity: 0.85 }
+    .save-btn:disabled { background: var(--disabled); color: var(--disabled-text); cursor: not-allowed; opacity: 1 }
 
-    .form-status { font-size: 10px; color: #555; min-height: 14px }
+    .form-status { font-size: 10px; color: var(--text-dim); min-height: 14px }
 
     /* ── Right panel ── */
     .right {
@@ -214,24 +287,25 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #080808;
+      background: var(--bg-deep);
       min-height: 0;
     }
 
     iframe {
       width: 500px;
       height: 500px;
-      border: 1px solid #1a1a1a;
-      background: #000;
+      border: 1px solid var(--border-soft);
+      background: var(--bg);
     }
 
-    .placeholder { color: #2a2a2a; font-size: 12px; letter-spacing: 0.1em }
+    .placeholder { color: var(--border-input); font-size: 12px; letter-spacing: 0.1em }
 
     .code-panel {
-      height: 180px;
-      border-top: 1px solid #222;
+      height: 200px;
+      border-top: 1px solid var(--border);
       display: flex;
       flex-direction: column;
+      flex-shrink: 0;
     }
 
     .code-panel-header {
@@ -239,33 +313,47 @@
       align-items: center;
       justify-content: space-between;
       padding: 6px 16px;
-      border-bottom: 1px solid #1a1a1a;
+      border-bottom: 1px solid var(--border-soft);
       font-size: 10px;
-      color: #444;
+      color: var(--text-muted);
       letter-spacing: 0.1em;
       flex-shrink: 0;
     }
 
-    .code-panel-header span { color: #666 }
+    .code-panel-header span { color: var(--text-sub) }
 
-    textarea#code-view {
+    /* CodeMirror 只读视图 */
+    .code-panel .CodeMirror {
       flex: 1;
-      background: #0a0a0a;
-      color: #666;
-      border: none;
-      padding: 12px 16px;
+      height: 100%;
       font-family: 'Courier New', monospace;
       font-size: 11px;
-      resize: none;
-      outline: none;
       line-height: 1.5;
+      border: none;
+    }
+
+    :root.light .code-panel .CodeMirror {
+      background: var(--bg-input);
+      color: var(--text-sub);
+    }
+
+    :root.light .code-panel .CodeMirror-gutters {
+      background: var(--bg-elevated);
+      border-right: 1px solid var(--border-input);
+    }
+
+    :root.light .code-panel .CodeMirror-linenumber {
+      color: var(--text-muted);
     }
   </style>
 </head>
 <body>
   <header>
     <span>sketch gallery</span>
-    <a href="/">← back to agent</a>
+    <div class="header-right">
+      <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">LIGHT</button>
+      <a href="/">← back to agent</a>
+    </div>
   </header>
 
   <div class="workspace">
@@ -274,7 +362,6 @@
         <div class="section-header">LOADING...</div>
       </div>
 
-      <!-- 添加表单，固定在左侧底部 -->
       <div class="add-form" id="add-form">
         <div class="add-form-title">
           <span id="form-label">ADD SKETCH</span>
@@ -310,6 +397,22 @@
     let allSketches = {}
     let addSource = 'own'
 
+    // ── Theme ──────────────────────────────────────────────
+    function applyTheme(light) {
+      document.documentElement.classList.toggle('light', light)
+      document.getElementById('theme-btn').textContent = light ? 'DARK' : 'LIGHT'
+      if (codeViewer) {
+        codeViewer.setOption('theme', light ? 'default' : 'monokai')
+      }
+    }
+
+    function toggleTheme() {
+      const nowLight = !document.documentElement.classList.contains('light')
+      localStorage.setItem('theme', nowLight ? 'light' : 'dark')
+      applyTheme(nowLight)
+    }
+
+    // ── Sketches ───────────────────────────────────────────
     async function loadSketches() {
       const res = await fetch('/api/sketches')
       allSketches = await res.json()
@@ -411,6 +514,20 @@
       }
     }
 
+    async function deleteSketch(name, el) {
+      if (!confirm(`Delete "${name}"?`)) return
+      el.style.opacity = '0.4'
+      try {
+        const res = await fetch(`/api/sketches/${name}`, { method: 'DELETE' })
+        const data = await res.json()
+        if (data.error) throw new Error(data.error)
+        await loadSketches()
+      } catch (err) {
+        el.style.opacity = '1'
+        alert('Error: ' + err.message)
+      }
+    }
+
     async function selectSketch(sketch, el) {
       document.querySelectorAll('.sketch-item').forEach(i => i.classList.remove('active'))
       el.classList.add('active')
@@ -418,7 +535,7 @@
       const res = await fetch(`/sketches/${sketch.file}`)
       const code = await res.text()
 
-      document.getElementById('code-view').value = code
+      codeViewer.setValue(code)
       document.getElementById('code-label').textContent = sketch.file
 
       document.getElementById('placeholder').style.display = 'none'
@@ -434,6 +551,19 @@
       document.getElementById('preview').src = URL.createObjectURL(blob)
     }
 
+    // ── Init ───────────────────────────────────────────────
+    const savedTheme = localStorage.getItem('theme')
+    const startLight = savedTheme === 'light'
+
+    const codeViewer = CodeMirror.fromTextArea(document.getElementById('code-view'), {
+      mode: 'javascript',
+      theme: startLight ? 'default' : 'monokai',
+      lineNumbers: true,
+      readOnly: true,
+      tabSize: 2,
+    })
+
+    applyTheme(startLight)
     loadSketches()
   </script>
 </body>
