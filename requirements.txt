@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+openai>=1.52,<2.0
+langgraph
+langchain
+chromadb

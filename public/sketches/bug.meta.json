@@ -1,0 +1,9 @@
+{
+  "title": "The Metamorphosis",
+  "style_notes": "Typography as visual material — Kafka's text becomes the texture of a bug. Characters drift, rotate, and infect their neighbors when touched, spreading deformation like a virus. Warm paper background, near-black to rust-red color shift. Dense, literary, narrative-driven. The sketch has a dramatic arc: pristine → corrupted. Perlin noise gives each character its own organic tremor.",
+  "mood": "unsettling, literary, slow transformation, body horror through typography",
+  "palette": "warm paper (#f4eee4), deep near-black (#16100a), rust red (#8b3512)",
+  "motion": "infection spread, mouse-driven deformation, Perlin noise idle sway, accumulated rotation",
+  "why_i_like_it": "",
+  "source": "own"
+}

@@ -1,0 +1,9 @@
+{
+  "title": "Sand Mandala",
+  "style_notes": "Radial symmetry with a prime number of axes (11, 13, or 17 — randomized each run). Thousands of tiny dots trace sine/cosine paths, layering into a glowing mandala. Pale yellow background, blue-purple particle hues. The code variable names are philosophical: theTimePerceived, yourSymmetries, theSpaceYouExist. A slow eclipse by a same-colored circle gradually hides the mandala. Meditative, mathematical, impermanent.",
+  "mood": "meditative, sacred geometry, impermanence, slow cosmic breathing",
+  "palette": "pale yellow (#fffacd), animated blue-purple-magenta particles (cos-driven color cycling)",
+  "motion": "radial rotation, sine wave oscillation, slow drift, circular eclipse sweep",
+  "why_i_like_it": "",
+  "source": "own"
+}

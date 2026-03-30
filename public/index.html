@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Creative Coding Agent</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0 }
+
+    body {
+      background: #0d0d0d;
+      color: #e0e0e0;
+      font-family: 'Courier New', monospace;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid #222;
+      font-size: 13px;
+      color: #555;
+      letter-spacing: 0.1em;
+    }
+
+    header span { color: #e0e0e0 }
+
+    .workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .left {
+      width: 380px;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid #222;
+    }
+
+    .prompt-area {
+      padding: 20px;
+      border-bottom: 1px solid #222;
+    }
+
+    .prompt-area label {
+      display: block;
+      font-size: 11px;
+      color: #555;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      background: #111;
+      color: #e0e0e0;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      padding: 12px;
+      font-family: inherit;
+      font-size: 13px;
+      resize: none;
+      line-height: 1.5;
+      outline: none;
+    }
+
+    textarea:focus { border-color: #444 }
+
+    .mode-selector {
+      display: flex;
+      gap: 6px;
+      padding: 12px 20px 0;
+    }
+
+    .mode-btn {
+      flex: 1;
+      margin: 0;
+      padding: 6px 4px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      background: #1a1a1a;
+      color: #555;
+      border: 1px solid #2a2a2a;
+    }
+
+    .mode-btn.active {
+      background: #e0e0e0;
+      color: #0d0d0d;
+      border-color: #e0e0e0;
+    }
+
+    .mode-btn:hover:not(.active) { background: #222; color: #aaa }
+
+    #prompt { height: 100px }
+    #code { flex: 1; border: none; border-radius: 0; font-size: 12px; padding: 16px }
+
+    button {
+      margin: 12px 20px 0;
+      padding: 10px;
+      background: #e0e0e0;
+      color: #0d0d0d;
+      border: none;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button:hover { background: #fff }
+    button:disabled { background: #333; color: #555; cursor: not-allowed }
+
+    .code-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-top: 1px solid #222;
+    }
+
+    .code-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 20px;
+      border-bottom: 1px solid #222;
+    }
+
+    .code-header span { font-size: 11px; color: #555; letter-spacing: 0.1em }
+
+    #run-btn {
+      margin: 0;
+      padding: 6px 14px;
+      font-size: 11px;
+    }
+
+    .right {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #080808;
+    }
+
+    iframe {
+      width: 600px;
+      height: 600px;
+      border: 1px solid #1a1a1a;
+      background: #000;
+    }
+
+    .status {
+      padding: 6px 20px;
+      font-size: 11px;
+      color: #555;
+      min-height: 28px;
+    }
+
+    .collect-toggle {
+      margin: 0 20px 12px;
+      padding: 6px;
+      background: none;
+      border: 1px dashed #2a2a2a;
+      color: #444;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      width: calc(100% - 40px);
+    }
+
+    .collect-toggle:hover { border-color: #555; color: #888 }
+
+    .collect-panel {
+      display: none;
+      padding: 0 20px 16px;
+      border-top: 1px solid #1a1a1a;
+    }
+
+    .collect-panel.open { display: block }
+
+    .collect-panel input {
+      width: 100%;
+      background: #111;
+      color: #e0e0e0;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 12px;
+      outline: none;
+      margin-bottom: 8px;
+    }
+
+    .collect-panel textarea {
+      height: 120px;
+      font-size: 11px;
+    }
+
+    .collect-panel button {
+      margin: 8px 0 0;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div><span>creative coding agent</span> — v0.1 · <span id="current-mode">builder</span> mode</div>
+    <a href="/gallery.html" style="color:#555;text-decoration:none;font-size:11px;letter-spacing:0.1em">GALLERY →</a>
+  </header>
+
+  <div class="workspace">
+    <div class="left">
+      <div class="mode-selector">
+        <button class="mode-btn active" data-mode="builder" onclick="setMode('builder')">BUILDER</button>
+        <button class="mode-btn" data-mode="muse" onclick="setMode('muse')">MUSE</button>
+        <button class="mode-btn" data-mode="critic" onclick="setMode('critic')">CRITIC</button>
+        <button class="mode-btn" data-mode="curator" onclick="setMode('curator')">CURATOR</button>
+      </div>
+
+      <div class="prompt-area">
+        <label>DESCRIBE YOUR VISUAL IDEA</label>
+        <textarea id="prompt" placeholder="particles that drift like smoke, responding to a slow invisible force..."></textarea>
+        <button id="generate-btn" onclick="generate()">GENERATE</button>
+        <div class="status" id="status"></div>
+      </div>
+
+      <div class="code-area">
+        <div class="code-header">
+          <span>P5.JS CODE</span>
+          <button id="run-btn" onclick="run()">RUN</button>
+        </div>
+        <textarea id="code" spellcheck="false" placeholder="// generated code will appear here"></textarea>
+      </div>
+    </div>
+
+    <div class="right">
+      <iframe id="preview" sandbox="allow-scripts"></iframe>
+    </div>
+  </div>
+
+  <script>
+    let currentMode = 'builder'
+
+    function setMode(mode) {
+      currentMode = mode
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode))
+      document.getElementById('current-mode').textContent = mode
+      const placeholders = {
+        builder: 'particles that drift like smoke, responding to a slow invisible force...',
+        muse: 'what should I explore next? or describe a feeling...',
+        critic: 'paste your sketch code here, or describe what you made...',
+        curator: 'what patterns do you see in my work?'
+      }
+      document.getElementById('prompt').placeholder = placeholders[mode]
+    }
+
+    async function generate() {
+      const description = document.getElementById('prompt').value.trim()
+      if (!description) return
+
+      const btn = document.getElementById('generate-btn')
+      const status = document.getElementById('status')
+      btn.disabled = true
+      status.textContent = `${currentMode} thinking...`
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ description, mode: currentMode })
+        })
+        const data = await res.json()
+        if (data.error) throw new Error(data.error)
+
+        document.getElementById('code').value = data.code
+        const isCode = currentMode === 'builder'
+        status.textContent = isCode ? 'done — click RUN to preview' : `${data.mode} responded`
+        if (isCode) run()
+      } catch (err) {
+        status.textContent = 'error: ' + err.message
+      } finally {
+        btn.disabled = false
+      }
+    }
+
+    function run() {
+      const code = document.getElementById('code').value
+      const html = `<!DOCTYPE html>
+<html>
+<head>
+  <style>* { margin:0; padding:0 } canvas { display:block }</style>
+</head>
+<body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"><\/script>
+  <script>${code}<\/script>
+</body>
+</html>`
+      const blob = new Blob([html], { type: 'text/html' })
+      document.getElementById('preview').src = URL.createObjectURL(blob)
+    }
+
+    // cmd+enter / ctrl+enter to generate
+    document.getElementById('prompt').addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate()
+    })
+  </script>
+</body>
+</html>
