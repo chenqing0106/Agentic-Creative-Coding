@@ -7,3 +7,5 @@ __pycache__/
 .DS_Store
 .claude/
 .vscode/
+.playwright-mcp
+ui-*.png

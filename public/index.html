@@ -205,10 +205,49 @@
 
     .code-header span { font-size: 11px; color: var(--text-dim); letter-spacing: 0.1em }
 
-    #run-btn {
+    .code-header-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    #run-btn, #save-btn {
       margin: 0;
       padding: 6px 14px;
       font-size: 11px;
+    }
+
+    #save-btn {
+      display: none;
+      background: none;
+      border: 1px solid var(--border-input);
+      color: var(--text-dim);
+    }
+
+    #save-btn:hover { border-color: var(--text-dim); color: var(--text); background: none; opacity: 1 }
+    #save-btn:disabled { opacity: 0.4; cursor: not-allowed }
+
+    /* loading bar */
+    .code-area { position: relative }
+
+    .loading-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 2px;
+      width: 0;
+      background: var(--accent);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .loading-bar.active {
+      animation: bar-sweep 1.4s ease-in-out infinite;
+    }
+
+    @keyframes bar-sweep {
+      0%   { left: -35%; width: 35% }
+      100% { left: 100%; width: 35% }
     }
 
     /* CodeMirror 填满 code-area */
@@ -269,6 +308,22 @@
       color: var(--text-dim);
       min-height: 28px;
     }
+
+    .muse-action {
+      display: none;
+      padding: 0 20px 10px;
+    }
+    .muse-action button {
+      margin: 0;
+      padding: 6px 14px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      background: none;
+      border: 1px solid var(--border-input);
+      color: var(--text-sub);
+      width: 100%;
+    }
+    .muse-action button:hover { border-color: var(--text-dim); color: var(--text); opacity: 1 }
 
     .collect-toggle {
       margin: 0 20px 12px;
@@ -339,12 +394,19 @@
         <textarea id="prompt" placeholder="particles that drift like smoke, responding to a slow invisible force..."></textarea>
         <button id="generate-btn" onclick="generate()">GENERATE</button>
         <div class="status" id="status"></div>
+        <div class="muse-action" id="muse-action">
+          <button onclick="sendToBuilder()">→ BRING TO BUILDER</button>
+        </div>
       </div>
 
       <div class="code-area">
+        <div class="loading-bar" id="loading-bar"></div>
         <div class="code-header">
           <span>P5.JS CODE</span>
-          <button id="run-btn" onclick="run()">RUN</button>
+          <div class="code-header-actions">
+            <button id="save-btn" onclick="saveToGallery()">SAVE</button>
+            <button id="run-btn" onclick="run()">RUN</button>
+          </div>
         </div>
         <textarea id="code" spellcheck="false" placeholder="// generated code will appear here"></textarea>
       </div>
@@ -395,8 +457,15 @@
       if (!description) return
 
       const btn = document.getElementById('generate-btn')
+      const saveBtn = document.getElementById('save-btn')
       const status = document.getElementById('status')
+      const bar = document.getElementById('loading-bar')
+
+      const museAction = document.getElementById('muse-action')
       btn.disabled = true
+      saveBtn.style.display = 'none'
+      museAction.style.display = 'none'
+      bar.classList.add('active')
       status.textContent = `${currentMode} thinking...`
 
       try {
@@ -411,12 +480,60 @@
         editor.setValue(data.code)
         const isCode = currentMode === 'builder'
         status.textContent = isCode ? 'done — click RUN to preview' : `${data.mode} responded`
-        if (isCode) run()
+        if (isCode) {
+          saveBtn.style.display = 'block'
+          run()
+        } else if (currentMode === 'muse') {
+          museAction.style.display = 'block'
+        }
       } catch (err) {
         status.textContent = 'error: ' + err.message
       } finally {
         btn.disabled = false
+        bar.classList.remove('active')
       }
+    }
+
+    // ── Save to gallery ────────────────────────────────────
+    async function saveToGallery() {
+      const prompt = document.getElementById('prompt').value.trim()
+      const name = prompt
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .trim()
+        .split(/\s+/)
+        .slice(0, 4)
+        .join('-') || `sketch-${Date.now()}`
+
+      const btn = document.getElementById('save-btn')
+      const status = document.getElementById('status')
+      btn.disabled = true
+      status.textContent = 'saving...'
+
+      try {
+        const res = await fetch('/api/save-sketch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, code: editor.getValue(), source: 'own' })
+        })
+        const data = await res.json()
+        if (data.error) throw new Error(data.error)
+        status.textContent = `saved as "${name}" — ${data.total} in library`
+        btn.textContent = 'SAVED ✓'
+        setTimeout(() => { btn.textContent = 'SAVE'; btn.disabled = false }, 2000)
+      } catch (err) {
+        status.textContent = 'save error: ' + err.message
+        btn.disabled = false
+      }
+    }
+
+    // ── Muse → Builder ────────────────────────────────────
+    function sendToBuilder() {
+      const museText = editor.getValue().trim()
+      setMode('builder')
+      document.getElementById('prompt').value = museText.slice(0, 300)
+      document.getElementById('muse-action').style.display = 'none'
+      document.getElementById('prompt').focus()
     }
 
     // ── Run ────────────────────────────────────────────────
@@ -454,6 +571,19 @@
     document.getElementById('prompt').addEventListener('keydown', e => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate()
     })
+
+    // ── Gallery → Critic handoff ───────────────────────────
+    const pendingCritic = localStorage.getItem('pendingCritic')
+    if (pendingCritic) {
+      try {
+        const { code, filename } = JSON.parse(pendingCritic)
+        localStorage.removeItem('pendingCritic')
+        setMode('critic')
+        editor.setValue(code)
+        document.getElementById('prompt').value = `Analyze this sketch: ${filename}`
+        document.getElementById('status').textContent = `sketch loaded — click GENERATE to get critique`
+      } catch (e) { localStorage.removeItem('pendingCritic') }
+    }
   </script>
 </body>
 </html>

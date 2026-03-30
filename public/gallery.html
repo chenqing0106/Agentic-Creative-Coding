@@ -328,6 +328,28 @@
 
     .code-panel-header span { color: var(--text-sub) }
 
+    .panel-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .action-btn {
+      background: none;
+      border: 1px solid var(--border-input);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      padding: 3px 10px;
+      cursor: pointer;
+      margin: 0;
+      border-radius: 3px;
+      display: none;
+    }
+
+    .action-btn:hover { border-color: var(--text-dim); color: var(--text); opacity: 1 }
+
     /* CodeMirror 只读视图 */
     .code-panel .CodeMirror {
       flex: 1;
@@ -400,8 +422,10 @@
       </div>
       <div class="code-panel">
         <div class="code-panel-header">
-          <div>SOURCE</div>
-          <span id="code-label">—</span>
+          <div>SOURCE <span id="code-label">—</span></div>
+          <div class="panel-actions">
+            <button class="action-btn" id="critic-btn" onclick="sendToCritic()">SEND TO CRITIC →</button>
+          </div>
         </div>
         <textarea id="code-view" readonly placeholder="// code will appear here"></textarea>
       </div>
@@ -543,15 +567,19 @@
       }
     }
 
+    let selectedSketch = null
+
     async function selectSketch(sketch, el) {
       document.querySelectorAll('.sketch-item').forEach(i => i.classList.remove('active'))
       el.classList.add('active')
 
       const res = await fetch(`/sketches/${sketch.file}`)
       const code = await res.text()
+      selectedSketch = { code, filename: sketch.file }
 
       codeViewer.setValue(code)
       document.getElementById('code-label').textContent = sketch.file
+      document.getElementById('critic-btn').style.display = 'block'
 
       document.getElementById('placeholder').style.display = 'none'
       const html = `<!DOCTYPE html>
@@ -564,6 +592,12 @@
 </html>`
       const blob = new Blob([html], { type: 'text/html' })
       document.getElementById('preview').src = URL.createObjectURL(blob)
+    }
+
+    function sendToCritic() {
+      if (!selectedSketch) return
+      localStorage.setItem('pendingCritic', JSON.stringify(selectedSketch))
+      window.location.href = '/'
     }
 
     // ── Init ───────────────────────────────────────────────
