@@ -4,11 +4,9 @@
   <meta charset="UTF-8">
   <title>Creative Coding Agent</title>
 
-  <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-  <!-- CodeMirror 5 -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
@@ -64,17 +62,20 @@
       height: 100vh;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
 
+    /* ── Header ── */
     header {
-      padding: 16px 24px;
+      padding: 12px 20px;
       border-bottom: 1px solid var(--border);
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-dim);
       letter-spacing: 0.1em;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      flex-shrink: 0;
     }
 
     header span { color: var(--text) }
@@ -82,7 +83,7 @@
     .header-right {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
     }
 
     .theme-toggle {
@@ -97,195 +98,242 @@
       border-radius: 3px;
       transition: border-color 0.15s, color 0.15s;
     }
-
     .theme-toggle:hover { border-color: var(--text-dim); color: var(--text) }
 
+    /* ── Workspace ── */
     .workspace {
       display: flex;
       flex: 1;
       overflow: hidden;
     }
 
-    .left {
+    /* ── Left: Chat Panel ── */
+    .chat-panel {
       width: 380px;
+      flex-shrink: 0;
       display: flex;
       flex-direction: column;
       border-right: 1px solid var(--border);
+      overflow: hidden;
     }
 
-    .prompt-area {
-      padding: 20px;
-      border-bottom: 1px solid var(--border);
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+      min-height: 0;
     }
 
-    .prompt-area label {
-      display: block;
+    .messages::-webkit-scrollbar { width: 3px }
+    .messages::-webkit-scrollbar-track { background: transparent }
+    .messages::-webkit-scrollbar-thumb { background: var(--border-input); border-radius: 2px }
+
+    /* empty state */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      color: var(--text-muted);
       font-size: 11px;
-      color: var(--text-dim);
-      letter-spacing: 0.1em;
-      margin-bottom: 8px;
+      letter-spacing: 0.08em;
+      text-align: center;
+      padding: 24px;
+    }
+    .empty-state .es-title { font-size: 13px; color: var(--text-dim); margin-bottom: 4px }
+    .empty-state .es-modes { margin-top: 12px; color: var(--border-input); font-size: 10px; line-height: 1.8 }
+
+    /* message */
+    .msg {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
 
-    textarea {
-      width: 100%;
+    .msg-meta {
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mode-badge {
+      padding: 1px 5px;
+      border: 1px solid var(--border-input);
+      border-radius: 2px;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    /* user message */
+    .msg.user .msg-meta { color: var(--text-sub) }
+
+    .msg-body {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-soft);
+      border-radius: 4px;
+      padding: 10px 12px;
+      font-size: 12px;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .msg.user .msg-body {
+      background: var(--bg-input);
+      border-color: var(--border-input);
+      color: var(--text);
+    }
+
+    /* code message */
+    .msg-code {
+      background: var(--bg-deep);
+      border: 1px solid var(--border-soft);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .msg-code-snippet {
+      padding: 10px 12px;
+      font-size: 11px;
+      line-height: 1.5;
+      color: var(--text-sub);
+      white-space: pre;
+      overflow: hidden;
+      max-height: 72px;
+      -webkit-mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+      mask-image: linear-gradient(to bottom, black 40%, transparent 100%);
+    }
+
+    .msg-code-actions {
+      display: flex;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .msg-code-btn {
+      flex: 1;
+      padding: 7px 0;
+      background: none;
+      border: none;
+      border-right: 1px solid var(--border-soft);
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: background 0.1s, color 0.1s;
+      margin: 0;
+    }
+    .msg-code-btn:last-child { border-right: none }
+    .msg-code-btn:hover { background: var(--bg-elevated); color: var(--text) }
+
+    /* thinking */
+    .msg-thinking .msg-body {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* ── Input Area ── */
+    .input-area {
+      border-top: 1px solid var(--border);
+      padding: 10px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .mode-pills {
+      display: flex;
+      gap: 4px;
+    }
+
+    .pill {
+      padding: 3px 9px;
+      background: none;
+      border: 1px solid var(--border-input);
+      border-radius: 2px;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.12s;
+      margin: 0;
+    }
+    .pill.active { background: var(--accent); color: var(--accent-text); border-color: var(--accent) }
+    .pill:hover:not(.active) { border-color: var(--text-dim); color: var(--text-hover) }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .input-row textarea {
+      flex: 1;
       background: var(--bg-input);
       color: var(--text);
       border: 1px solid var(--border-input);
       border-radius: 4px;
-      padding: 12px;
+      padding: 9px 11px;
       font-family: inherit;
-      font-size: 13px;
+      font-size: 12px;
       resize: none;
       line-height: 1.5;
       outline: none;
+      min-height: 38px;
+      max-height: 120px;
+      overflow-y: auto;
     }
+    .input-row textarea:focus { border-color: var(--text-hover) }
 
-    textarea:focus { border-color: var(--text-hover) }
-
-    .mode-selector {
-      display: flex;
-      gap: 6px;
-      padding: 12px 20px 0;
-    }
-
-    .mode-btn {
-      flex: 1;
+    .send-btn {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      padding: 0;
       margin: 0;
-      padding: 6px 4px;
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      background: var(--bg-elevated);
-      color: var(--text-dim);
-      border: 1px solid var(--border-input);
-    }
-
-    .mode-btn.active {
-      background: var(--accent);
-      color: var(--accent-text);
-      border-color: var(--accent);
-    }
-
-    .mode-btn:hover:not(.active) { background: var(--border); color: var(--text-hover) }
-
-    #prompt { height: 100px }
-
-    button {
-      margin: 12px 20px 0;
-      padding: 10px;
       background: var(--accent);
       color: var(--accent-text);
       border: none;
       border-radius: 4px;
-      font-family: inherit;
-      font-size: 12px;
-      letter-spacing: 0.05em;
+      font-size: 15px;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       transition: opacity 0.15s;
     }
+    .send-btn:hover { opacity: 0.8 }
+    .send-btn:disabled { background: var(--disabled); color: var(--disabled-text); cursor: not-allowed; opacity: 1 }
 
-    button:hover { opacity: 0.85 }
-    button:disabled { background: var(--disabled); color: var(--disabled-text); cursor: not-allowed; opacity: 1 }
+    .input-hint {
+      font-size: 9px;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+    }
 
-    .code-area {
+    /* ── Right: Preview + Code ── */
+    .right-panel {
       flex: 1;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      border-top: 1px solid var(--border);
+      min-width: 0;
     }
 
-    .code-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 20px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    .code-header span { font-size: 11px; color: var(--text-dim); letter-spacing: 0.1em }
-
-    .code-header-actions {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-
-    #run-btn, #save-btn {
-      margin: 0;
-      padding: 6px 14px;
-      font-size: 11px;
-    }
-
-    #save-btn {
-      display: none;
-      background: none;
-      border: 1px solid var(--border-input);
-      color: var(--text-dim);
-    }
-
-    #save-btn:hover { border-color: var(--text-dim); color: var(--text); background: none; opacity: 1 }
-    #save-btn:disabled { opacity: 0.4; cursor: not-allowed }
-
-    /* loading bar */
-    .code-area { position: relative }
-
-    .loading-bar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 2px;
-      width: 0;
-      background: var(--accent);
-      z-index: 10;
-      pointer-events: none;
-    }
-
-    .loading-bar.active {
-      animation: bar-sweep 1.4s ease-in-out infinite;
-    }
-
-    @keyframes bar-sweep {
-      0%   { left: -35%; width: 35% }
-      100% { left: 100%; width: 35% }
-    }
-
-    /* CodeMirror 填满 code-area */
-    .CodeMirror {
-      flex: 1;
-      height: 100%;
-      font-family: 'JetBrains Mono', 'Courier New', monospace;
-      font-size: 12px;
-      line-height: 1.5;
-      border: none;
-    }
-
-    /* 暗色：覆盖 monokai 的 #272822，与页面色调统一 */
-    :root:not(.light) .CodeMirror {
-      background: var(--bg-input);
-    }
-
-    :root:not(.light) .CodeMirror-gutters {
-      background: var(--bg);
-      border-right: 1px solid var(--border-input);
-    }
-
-    /* 亮色 */
-    :root.light .CodeMirror {
-      background: var(--bg-input);
-      color: var(--text);
-    }
-
-    :root.light .CodeMirror-gutters {
-      background: var(--bg-elevated);
-      border-right: 1px solid var(--border-input);
-    }
-
-    :root.light .CodeMirror-linenumber {
-      color: var(--text-muted);
-    }
-
-    .right {
+    .preview-area {
       flex: 1;
       display: flex;
       align-items: center;
@@ -293,87 +341,134 @@
       background: var(--bg-deep);
       padding: 20px;
       overflow: hidden;
+      min-height: 0;
+      position: relative;
     }
 
     iframe {
-      width: min(calc(100vw - 380px - 40px), calc(100vh - 90px));
-      height: min(calc(100vw - 380px - 40px), calc(100vh - 90px));
+      aspect-ratio: 1;
+      max-width: calc(100% - 0px);
+      max-height: 100%;
+      width: auto;
+      height: 100%;
       border: 1px solid var(--border-soft);
       background: var(--bg);
-    }
-
-    .status {
-      padding: 6px 20px;
-      font-size: 11px;
-      color: var(--text-dim);
-      min-height: 28px;
-    }
-
-    .muse-action {
       display: none;
-      padding: 0 20px 10px;
     }
-    .muse-action button {
-      margin: 0;
-      padding: 6px 14px;
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      background: none;
-      border: 1px solid var(--border-input);
-      color: var(--text-sub);
-      width: 100%;
-    }
-    .muse-action button:hover { border-color: var(--text-dim); color: var(--text); opacity: 1 }
 
-    .collect-toggle {
-      margin: 0 20px 12px;
-      padding: 6px;
-      background: none;
-      border: 1px dashed var(--border-input);
-      color: var(--text-muted);
-      font-size: 10px;
+    iframe.visible { display: block }
+
+    .preview-placeholder {
+      position: absolute;
+      color: var(--border-input);
+      font-size: 11px;
       letter-spacing: 0.1em;
+      pointer-events: none;
+    }
+
+    /* ── Code Panel ── */
+    .code-panel {
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      height: 36px;
+      transition: height 0.2s ease;
+      overflow: hidden;
+    }
+
+    .code-panel.open { height: 240px }
+
+    .code-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      height: 36px;
+      min-height: 36px;
       cursor: pointer;
-      width: calc(100% - 40px);
+      user-select: none;
+      flex-shrink: 0;
+    }
+    .code-panel-header:hover .code-panel-title { color: var(--text-hover) }
+
+    .code-panel-title {
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: color 0.1s;
     }
 
-    .collect-toggle:hover { border-color: var(--text-dim); color: var(--text-sub) }
-
-    .collect-panel {
-      display: none;
-      padding: 0 20px 16px;
-      border-top: 1px solid var(--border-soft);
+    .toggle-icon {
+      font-size: 8px;
+      transition: transform 0.2s;
     }
 
-    .collect-panel.open { display: block }
+    .code-panel.open .toggle-icon { transform: rotate(90deg) }
 
-    .collect-panel input {
-      width: 100%;
-      background: var(--bg-input);
-      color: var(--text);
+    .code-panel-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .code-action-btn {
+      background: none;
       border: 1px solid var(--border-input);
-      border-radius: 4px;
-      padding: 8px 12px;
+      color: var(--text-muted);
       font-family: inherit;
-      font-size: 12px;
-      outline: none;
-      margin-bottom: 8px;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      padding: 3px 10px;
+      cursor: pointer;
+      margin: 0;
+      border-radius: 3px;
+      transition: all 0.1s;
     }
+    .code-action-btn:hover:not(:disabled) { border-color: var(--text-dim); color: var(--text) }
+    .code-action-btn:disabled { opacity: 0.35; cursor: not-allowed }
 
-    .collect-panel textarea {
-      height: 120px;
+    /* CodeMirror */
+    .code-panel .CodeMirror {
+      flex: 1;
+      height: 100%;
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
       font-size: 11px;
+      line-height: 1.5;
+      border: none;
     }
 
-    .collect-panel button {
-      margin: 8px 0 0;
-      width: 100%;
+    :root:not(.light) .code-panel .CodeMirror { background: var(--bg-input) }
+    :root:not(.light) .code-panel .CodeMirror-gutters { background: var(--bg); border-right: 1px solid var(--border-input) }
+    :root.light .code-panel .CodeMirror { background: var(--bg-input); color: var(--text) }
+    :root.light .code-panel .CodeMirror-gutters { background: var(--bg-elevated); border-right: 1px solid var(--border-input) }
+    :root.light .code-panel .CodeMirror-linenumber { color: var(--text-muted) }
+
+    /* loading bar */
+    .loading-bar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 2px;
+      background: var(--accent);
+      z-index: 100;
+      pointer-events: none;
+      width: 0;
+    }
+    .loading-bar.active { animation: bar-sweep 1.4s ease-in-out infinite }
+    @keyframes bar-sweep {
+      0%   { left: -35%; width: 35% }
+      100% { left: 100%; width: 35% }
     }
   </style>
 </head>
 <body>
+  <div class="loading-bar" id="loading-bar"></div>
+
   <header>
-    <div><span>creative coding agent</span> — v0.1 · <span id="current-mode">builder</span> mode</div>
+    <div><span>creative coding agent</span> — v0.2</div>
     <div class="header-right">
       <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()">LIGHT</button>
       <a href="/gallery.html" style="color:var(--text-dim);text-decoration:none;font-size:11px;letter-spacing:0.1em">GALLERY →</a>
@@ -381,52 +476,78 @@
   </header>
 
   <div class="workspace">
-    <div class="left">
-      <div class="mode-selector">
-        <button class="mode-btn active" data-mode="builder" onclick="setMode('builder')">BUILDER</button>
-        <button class="mode-btn" data-mode="muse" onclick="setMode('muse')">MUSE</button>
-        <button class="mode-btn" data-mode="critic" onclick="setMode('critic')">CRITIC</button>
-        <button class="mode-btn" data-mode="curator" onclick="setMode('curator')">CURATOR</button>
-      </div>
-
-      <div class="prompt-area">
-        <label>DESCRIBE YOUR VISUAL IDEA</label>
-        <textarea id="prompt" placeholder="particles that drift like smoke, responding to a slow invisible force..."></textarea>
-        <button id="generate-btn" onclick="generate()">GENERATE</button>
-        <div class="status" id="status"></div>
-        <div class="muse-action" id="muse-action">
-          <button onclick="sendToBuilder()">→ BRING TO BUILDER</button>
-        </div>
-      </div>
-
-      <div class="code-area">
-        <div class="loading-bar" id="loading-bar"></div>
-        <div class="code-header">
-          <span>P5.JS CODE</span>
-          <div class="code-header-actions">
-            <button id="save-btn" onclick="saveToGallery()">SAVE</button>
-            <button id="run-btn" onclick="run()">RUN</button>
+    <!-- Left: Chat -->
+    <div class="chat-panel">
+      <div class="messages" id="messages">
+        <div class="empty-state" id="empty-state">
+          <div class="es-title">creative coding agent</div>
+          <div>describe a visual idea to get started</div>
+          <div class="es-modes">
+            BUILDER — generate p5.js sketches<br>
+            MUSE — inspiration &amp; direction<br>
+            CRITIC — analyze your work<br>
+            CURATOR — reflect on your library
           </div>
         </div>
-        <textarea id="code" spellcheck="false" placeholder="// generated code will appear here"></textarea>
+      </div>
+
+      <div class="input-area">
+        <div class="mode-pills">
+          <button class="pill active" data-mode="builder" onclick="setMode('builder')">BUILDER</button>
+          <button class="pill" data-mode="muse" onclick="setMode('muse')">MUSE</button>
+          <button class="pill" data-mode="critic" onclick="setMode('critic')">CRITIC</button>
+          <button class="pill" data-mode="curator" onclick="setMode('curator')">CURATOR</button>
+        </div>
+        <div class="input-row">
+          <textarea id="prompt" rows="1"
+            placeholder="describe your visual idea..."
+            onkeydown="handleKey(event)"
+            oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="send-btn" onclick="send()">↑</button>
+        </div>
+        <div class="input-hint">cmd+enter to send · @builder @muse @critic @curator</div>
       </div>
     </div>
 
-    <div class="right">
-      <iframe id="preview" sandbox="allow-scripts"></iframe>
+    <!-- Right: Preview + Code -->
+    <div class="right-panel">
+      <div class="preview-area">
+        <iframe id="preview" sandbox="allow-scripts"></iframe>
+        <div class="preview-placeholder" id="preview-placeholder">run a sketch to preview</div>
+      </div>
+
+      <div class="code-panel" id="code-panel">
+        <div class="code-panel-header" onclick="toggleCodePanel()">
+          <div class="code-panel-title">
+            <span class="toggle-icon">▶</span>
+            P5.JS CODE
+          </div>
+          <div class="code-panel-actions" onclick="event.stopPropagation()">
+            <button class="code-action-btn" id="run-btn" onclick="runCode()" disabled>RUN</button>
+            <button class="code-action-btn" id="save-btn" onclick="saveToGallery()" disabled>SAVE</button>
+          </div>
+        </div>
+        <textarea id="code-editor" spellcheck="false"></textarea>
+      </div>
     </div>
   </div>
 
   <script>
-    // ── Theme ──────────────────────────────────────────────
-    const isDark = () => document.documentElement.classList.contains('light') === false
+    // ── Constants ──────────────────────────────────────────
+    const STORAGE_MSGS = 'cc_messages_v2'
+    const STORAGE_CODE = 'cc_current_code'
+    const MAX_MSGS = 60
 
+    // ── State ──────────────────────────────────────────────
+    let currentMode = 'builder'
+    let isGenerating = false
+    let editor = null
+
+    // ── Theme ──────────────────────────────────────────────
     function applyTheme(light) {
       document.documentElement.classList.toggle('light', light)
       document.getElementById('theme-btn').textContent = light ? 'DARK' : 'LIGHT'
-      if (editor) {
-        editor.setOption('theme', light ? 'default' : 'monokai')
-      }
+      if (editor) editor.setOption('theme', light ? 'default' : 'monokai')
     }
 
     function toggleTheme() {
@@ -436,68 +557,259 @@
     }
 
     // ── Mode ───────────────────────────────────────────────
-    let currentMode = 'builder'
-
     function setMode(mode) {
       currentMode = mode
-      document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode))
-      document.getElementById('current-mode').textContent = mode
-      const placeholders = {
-        builder: 'particles that drift like smoke, responding to a slow invisible force...',
-        muse: 'what should I explore next? or describe a feeling...',
-        critic: 'paste your sketch code here, or describe what you made...',
-        curator: 'what patterns do you see in my work?'
-      }
-      document.getElementById('prompt').placeholder = placeholders[mode]
+      document.querySelectorAll('.pill').forEach(b =>
+        b.classList.toggle('active', b.dataset.mode === mode)
+      )
     }
 
-    // ── Generate ───────────────────────────────────────────
-    async function generate() {
-      const description = document.getElementById('prompt').value.trim()
-      if (!description) return
+    // ── Input helpers ──────────────────────────────────────
+    function autoResize(el) {
+      el.style.height = 'auto'
+      el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+    }
 
-      const btn = document.getElementById('generate-btn')
-      const saveBtn = document.getElementById('save-btn')
-      const status = document.getElementById('status')
-      const bar = document.getElementById('loading-bar')
+    function handleKey(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault()
+        send()
+      }
+    }
 
-      const museAction = document.getElementById('muse-action')
-      btn.disabled = true
-      saveBtn.style.display = 'none'
-      museAction.style.display = 'none'
-      bar.classList.add('active')
-      status.textContent = `${currentMode} thinking...`
+    // ── Message persistence ────────────────────────────────
+    function loadMsgs() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_MSGS) || '[]') }
+      catch { return [] }
+    }
+
+    function saveMsgs(msgs) {
+      localStorage.setItem(STORAGE_MSGS, JSON.stringify(msgs.slice(-MAX_MSGS)))
+    }
+
+    // ── Render messages ────────────────────────────────────
+    function buildMsgEl(msg) {
+      const el = document.createElement('div')
+      el.className = 'msg ' + msg.role
+
+      const meta = document.createElement('div')
+      meta.className = 'msg-meta'
+      if (msg.role === 'user') {
+        meta.textContent = 'you'
+      } else {
+        const badge = `<span class="mode-badge">${msg.mode || 'builder'}</span>`
+        meta.innerHTML = `agent ${badge}`
+      }
+      el.appendChild(meta)
+
+      if (msg.isCode) {
+        const wrap = document.createElement('div')
+        wrap.className = 'msg-code'
+
+        const snippet = document.createElement('div')
+        snippet.className = 'msg-code-snippet'
+        snippet.textContent = msg.content.split('\n').slice(0, 10).join('\n')
+
+        const actions = document.createElement('div')
+        actions.className = 'msg-code-actions'
+
+        const runBtn = document.createElement('button')
+        runBtn.className = 'msg-code-btn'
+        runBtn.textContent = '▶  RUN'
+        runBtn.onclick = () => {
+          setEditorCode(msg.content)
+          runCode()
+        }
+
+        const viewBtn = document.createElement('button')
+        viewBtn.className = 'msg-code-btn'
+        viewBtn.textContent = '{ }  VIEW CODE'
+        viewBtn.onclick = () => {
+          setEditorCode(msg.content)
+          openCodePanel()
+        }
+
+        actions.appendChild(runBtn)
+        actions.appendChild(viewBtn)
+        wrap.appendChild(snippet)
+        wrap.appendChild(actions)
+        el.appendChild(wrap)
+      } else {
+        const body = document.createElement('div')
+        body.className = 'msg-body'
+        body.textContent = msg.content
+        el.appendChild(body)
+      }
+
+      return el
+    }
+
+    function renderAllMsgs() {
+      const msgs = loadMsgs()
+      const container = document.getElementById('messages')
+      const empty = document.getElementById('empty-state')
+
+      // clear existing msg elements
+      Array.from(container.querySelectorAll('.msg')).forEach(el => el.remove())
+
+      if (msgs.length === 0) {
+        empty.style.display = ''
+        return
+      }
+
+      empty.style.display = 'none'
+      msgs.forEach(msg => container.appendChild(buildMsgEl(msg)))
+      container.scrollTop = container.scrollHeight
+    }
+
+    function appendMsgToDOM(msg) {
+      const container = document.getElementById('messages')
+      document.getElementById('empty-state').style.display = 'none'
+      container.appendChild(buildMsgEl(msg))
+      container.scrollTop = container.scrollHeight
+    }
+
+    function addThinkingEl() {
+      const container = document.getElementById('messages')
+      const el = document.createElement('div')
+      el.className = 'msg agent msg-thinking'
+      el.id = 'thinking-msg'
+
+      const meta = document.createElement('div')
+      meta.className = 'msg-meta'
+      meta.textContent = 'agent'
+
+      const body = document.createElement('div')
+      body.className = 'msg-body'
+      body.textContent = currentMode + ' thinking...'
+
+      el.appendChild(meta)
+      el.appendChild(body)
+      container.appendChild(el)
+      container.scrollTop = container.scrollHeight
+    }
+
+    function removeThinkingEl() {
+      document.getElementById('thinking-msg')?.remove()
+    }
+
+    // ── Send ───────────────────────────────────────────────
+    async function send() {
+      if (isGenerating) return
+
+      const input = document.getElementById('prompt')
+      const text = input.value.trim()
+      if (!text) return
+
+      // parse @mode mention
+      const modeMatch = text.match(/@(builder|muse|critic|curator)/i)
+      const effectiveMode = modeMatch ? modeMatch[1].toLowerCase() : currentMode
+      if (modeMatch) setMode(effectiveMode)
+
+      // save + show user message
+      const userMsg = { role: 'user', content: text, mode: effectiveMode }
+      const msgs = loadMsgs()
+      msgs.push(userMsg)
+      saveMsgs(msgs)
+      appendMsgToDOM(userMsg)
+
+      input.value = ''
+      input.style.height = 'auto'
+
+      isGenerating = true
+      document.getElementById('send-btn').disabled = true
+      document.getElementById('loading-bar').classList.add('active')
+      addThinkingEl()
+
+      // for critic mode, pass current sketch code if available
+      const sketchCode = effectiveMode === 'critic' ? (editor.getValue().trim() || null) : null
 
       try {
         const res = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ description, mode: currentMode })
+          body: JSON.stringify({ description: text, mode: effectiveMode, sketch_code: sketchCode })
         })
         const data = await res.json()
         if (data.error) throw new Error(data.error)
 
-        editor.setValue(data.code)
-        const isCode = currentMode === 'builder'
-        status.textContent = isCode ? 'done — click RUN to preview' : `${data.mode} responded`
+        removeThinkingEl()
+
+        const resolvedMode = data.mode || effectiveMode
+        const isCode = resolvedMode === 'builder'
+        const agentMsg = { role: 'agent', mode: resolvedMode, content: data.code, isCode }
+
+        const allMsgs = loadMsgs()
+        allMsgs.push(agentMsg)
+        saveMsgs(allMsgs)
+        appendMsgToDOM(agentMsg)
+
         if (isCode) {
-          saveBtn.style.display = 'block'
-          run()
-        } else if (currentMode === 'muse') {
-          museAction.style.display = 'block'
+          setEditorCode(data.code)
+          runCode()
         }
       } catch (err) {
-        status.textContent = 'error: ' + err.message
+        removeThinkingEl()
+        const errMsg = { role: 'agent', mode: 'system', content: 'error: ' + err.message, isCode: false }
+        appendMsgToDOM(errMsg)
       } finally {
-        btn.disabled = false
-        bar.classList.remove('active')
+        isGenerating = false
+        document.getElementById('send-btn').disabled = false
+        document.getElementById('loading-bar').classList.remove('active')
+      }
+    }
+
+    // ── Code editor ────────────────────────────────────────
+    function setEditorCode(code) {
+      editor.setValue(code)
+      localStorage.setItem(STORAGE_CODE, code)
+      document.getElementById('run-btn').disabled = false
+      document.getElementById('save-btn').disabled = false
+    }
+
+    function runCode() {
+      const code = editor.getValue().trim()
+      if (!code) return
+
+      const html = `<!DOCTYPE html>
+<html>
+<head><style>* { margin:0; padding:0 } canvas { display:block }</style></head>
+<body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"><\/script>
+  <script>${code}<\/script>
+</body>
+</html>`
+      const blob = new Blob([html], { type: 'text/html' })
+      const iframe = document.getElementById('preview')
+      iframe.src = URL.createObjectURL(blob)
+      iframe.classList.add('visible')
+      document.getElementById('preview-placeholder').style.display = 'none'
+    }
+
+    // ── Code panel ─────────────────────────────────────────
+    function toggleCodePanel() {
+      const panel = document.getElementById('code-panel')
+      const isOpen = panel.classList.toggle('open')
+      if (isOpen) editor.refresh()
+    }
+
+    function openCodePanel() {
+      const panel = document.getElementById('code-panel')
+      if (!panel.classList.contains('open')) {
+        panel.classList.add('open')
+        editor.refresh()
       }
     }
 
     // ── Save to gallery ────────────────────────────────────
     async function saveToGallery() {
-      const prompt = document.getElementById('prompt').value.trim()
-      const name = prompt
+      const code = editor.getValue().trim()
+      if (!code) return
+
+      const msgs = loadMsgs()
+      const lastUser = [...msgs].reverse().find(m => m.role === 'user')
+      const raw = lastUser?.content || `sketch-${Date.now()}`
+      const name = raw
         .toLowerCase()
         .replace(/[^a-z0-9\s]/g, '')
         .trim()
@@ -506,58 +818,30 @@
         .join('-') || `sketch-${Date.now()}`
 
       const btn = document.getElementById('save-btn')
-      const status = document.getElementById('status')
       btn.disabled = true
-      status.textContent = 'saving...'
+      btn.textContent = 'SAVING...'
 
       try {
         const res = await fetch('/api/save-sketch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, code: editor.getValue(), source: 'own' })
+          body: JSON.stringify({ name, code, source: 'own' })
         })
         const data = await res.json()
         if (data.error) throw new Error(data.error)
-        status.textContent = `saved as "${name}" — ${data.total} in library`
         btn.textContent = 'SAVED ✓'
         setTimeout(() => { btn.textContent = 'SAVE'; btn.disabled = false }, 2000)
-      } catch (err) {
-        status.textContent = 'save error: ' + err.message
-        btn.disabled = false
+      } catch {
+        btn.textContent = 'ERROR'
+        setTimeout(() => { btn.textContent = 'SAVE'; btn.disabled = false }, 2000)
       }
-    }
-
-    // ── Muse → Builder ────────────────────────────────────
-    function sendToBuilder() {
-      const museText = editor.getValue().trim()
-      setMode('builder')
-      document.getElementById('prompt').value = museText.slice(0, 300)
-      document.getElementById('muse-action').style.display = 'none'
-      document.getElementById('prompt').focus()
-    }
-
-    // ── Run ────────────────────────────────────────────────
-    function run() {
-      const code = editor.getValue()
-      const html = `<!DOCTYPE html>
-<html>
-<head>
-  <style>* { margin:0; padding:0 } canvas { display:block }</style>
-</head>
-<body>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.min.js"><\/script>
-  <script>${code}<\/script>
-</body>
-</html>`
-      const blob = new Blob([html], { type: 'text/html' })
-      document.getElementById('preview').src = URL.createObjectURL(blob)
     }
 
     // ── Init ───────────────────────────────────────────────
     const savedTheme = localStorage.getItem('theme')
     const startLight = savedTheme === 'light'
 
-    const editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+    editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
       mode: 'javascript',
       theme: startLight ? 'default' : 'monokai',
       lineNumbers: true,
@@ -567,12 +851,18 @@
 
     applyTheme(startLight)
 
-    // cmd+enter / ctrl+enter to generate
-    document.getElementById('prompt').addEventListener('keydown', e => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate()
-    })
+    // restore messages
+    renderAllMsgs()
 
-    // ── Gallery → Critic handoff ───────────────────────────
+    // restore last code
+    const savedCode = localStorage.getItem(STORAGE_CODE)
+    if (savedCode) {
+      editor.setValue(savedCode)
+      document.getElementById('run-btn').disabled = false
+      document.getElementById('save-btn').disabled = false
+    }
+
+    // Gallery → Critic handoff
     const pendingCritic = localStorage.getItem('pendingCritic')
     if (pendingCritic) {
       try {
@@ -580,9 +870,13 @@
         localStorage.removeItem('pendingCritic')
         setMode('critic')
         editor.setValue(code)
-        document.getElementById('prompt').value = `Analyze this sketch: ${filename}`
-        document.getElementById('status').textContent = `sketch loaded — click GENERATE to get critique`
-      } catch (e) { localStorage.removeItem('pendingCritic') }
+        document.getElementById('run-btn').disabled = false
+        document.getElementById('save-btn').disabled = false
+        const input = document.getElementById('prompt')
+        input.value = `Analyze this sketch: ${filename}`
+        autoResize(input)
+        input.focus()
+      } catch { localStorage.removeItem('pendingCritic') }
     }
   </script>
 </body>
