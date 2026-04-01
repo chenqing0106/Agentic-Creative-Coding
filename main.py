@@ -5,11 +5,13 @@ FastAPI 后端入口
 """
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
+import json as _json
 from pathlib import Path
-from backend.graph import run_agent
+from backend.graph import run_agent, run_agent_stream
 from backend.rag import build_index
 from backend.style_profile import rebuild_profile, update_user_statement, load_profile
 
@@ -28,6 +30,23 @@ class GenerateRequest(BaseModel):
 async def generate(req: GenerateRequest):
     result = await run_agent(req.description, req.sketch_code, req.mode)
     return {"mode": result["mode"], "code": result["result"]}
+
+
+@app.post("/api/generate/stream")
+async def generate_stream(req: GenerateRequest):
+    async def event_generator():
+        try:
+            async for event in run_agent_stream(req.description, req.sketch_code, req.mode):
+                yield f"data: {_json.dumps(event)}\n\n"
+        except Exception as e:
+            yield f"data: {_json.dumps({'type': 'error', 'text': str(e)})}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
+    )
 
 
 @app.get("/api/sketches")

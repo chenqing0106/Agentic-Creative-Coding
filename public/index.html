@@ -673,7 +673,6 @@
       const container = document.getElementById('messages')
       const el = document.createElement('div')
       el.className = 'msg agent msg-thinking'
-      el.id = 'thinking-msg'
 
       const meta = document.createElement('div')
       meta.className = 'msg-meta'
@@ -687,13 +686,10 @@
       el.appendChild(body)
       container.appendChild(el)
       container.scrollTop = container.scrollHeight
+      return el
     }
 
-    function removeThinkingEl() {
-      document.getElementById('thinking-msg')?.remove()
-    }
-
-    // ── Send ───────────────────────────────────────────────
+    // ── Send (streaming) ───────────────────────────────────
     async function send() {
       if (isGenerating) return
 
@@ -719,44 +715,119 @@
       isGenerating = true
       document.getElementById('send-btn').disabled = true
       document.getElementById('loading-bar').classList.add('active')
-      addThinkingEl()
 
-      // for critic mode, pass current sketch code if available
+      // thinking indicator
+      const thinkingEl = addThinkingEl()
+      const thinkingBody = thinkingEl.querySelector('.msg-body')
+
+      // for critic mode, pass current sketch code
       const sketchCode = effectiveMode === 'critic' ? (editor.getValue().trim() || null) : null
 
+      // streaming state
+      let resolvedMode = effectiveMode
+      let streamedContent = ''
+      let streamMsgEl = null  // the live agent message bubble
+
       try {
-        const res = await fetch('/api/generate', {
+        const res = await fetch('/api/generate/stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ description: text, mode: effectiveMode, sketch_code: sketchCode })
         })
-        const data = await res.json()
-        if (data.error) throw new Error(data.error)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
 
-        removeThinkingEl()
+        const reader = res.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
 
-        const resolvedMode = data.mode || effectiveMode
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() // keep incomplete line
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue
+            const raw = line.slice(6).trim()
+            if (raw === '[DONE]') break
+
+            let event
+            try { event = JSON.parse(raw) } catch { continue }
+
+            if (event.type === 'mode') {
+              resolvedMode = event.mode
+            } else if (event.type === 'status') {
+              thinkingBody.textContent = event.text
+            } else if (event.type === 'token') {
+              // first token: replace thinking bubble with live agent bubble
+              if (!streamMsgEl) {
+                thinkingEl.remove()
+                streamMsgEl = createStreamingMsgEl(resolvedMode)
+                document.getElementById('messages').appendChild(streamMsgEl)
+              }
+              streamedContent += event.text
+              updateStreamingMsgEl(streamMsgEl, resolvedMode, streamedContent)
+              // scroll
+              const container = document.getElementById('messages')
+              container.scrollTop = container.scrollHeight
+            } else if (event.type === 'error') {
+              throw new Error(event.text)
+            }
+          }
+        }
+
+        // finalize: replace streaming bubble with proper message element
+        if (streamMsgEl) streamMsgEl.remove()
+        else thinkingEl.remove()
+
         const isCode = resolvedMode === 'builder'
-        const agentMsg = { role: 'agent', mode: resolvedMode, content: data.code, isCode }
-
+        const agentMsg = { role: 'agent', mode: resolvedMode, content: streamedContent, isCode }
         const allMsgs = loadMsgs()
         allMsgs.push(agentMsg)
         saveMsgs(allMsgs)
         appendMsgToDOM(agentMsg)
 
-        if (isCode) {
-          setEditorCode(data.code)
+        if (isCode && streamedContent.trim()) {
+          setEditorCode(streamedContent)
           runCode()
         }
       } catch (err) {
-        removeThinkingEl()
-        const errMsg = { role: 'agent', mode: 'system', content: 'error: ' + err.message, isCode: false }
-        appendMsgToDOM(errMsg)
+        thinkingEl.remove()
+        if (streamMsgEl) streamMsgEl.remove()
+        appendMsgToDOM({ role: 'agent', mode: 'system', content: 'error: ' + err.message, isCode: false })
       } finally {
         isGenerating = false
         document.getElementById('send-btn').disabled = false
         document.getElementById('loading-bar').classList.remove('active')
       }
+    }
+
+    // create a live-updating message bubble during streaming
+    function createStreamingMsgEl(mode) {
+      const el = document.createElement('div')
+      el.className = 'msg agent msg-streaming'
+
+      const meta = document.createElement('div')
+      meta.className = 'msg-meta'
+      meta.innerHTML = `agent <span class="mode-badge">${mode}</span>`
+
+      const body = document.createElement('div')
+      body.className = 'msg-body'
+      body.style.whiteSpace = 'pre-wrap'
+
+      el.appendChild(meta)
+      el.appendChild(body)
+      return el
+    }
+
+    function updateStreamingMsgEl(el, mode, content) {
+      // update badge
+      const badge = el.querySelector('.mode-badge')
+      if (badge) badge.textContent = mode
+      // update body
+      el.querySelector('.msg-body').textContent = content
     }
 
     // ── Code editor ────────────────────────────────────────
